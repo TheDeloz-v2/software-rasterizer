@@ -213,6 +213,7 @@ class Renderer(object):
                     v3=model.vertices[face[3][0] -1]
 
                 if self.vertexShader:
+                    
                     v0=self.vertexShader(v0, modelMatrix=mMatrix)
                     v1=self.vertexShader(v1, modelMatrix=mMatrix)
                     v2=self.vertexShader(v2, modelMatrix=mMatrix)

@@ -9,10 +9,10 @@ rend = Renderer(width, height)
 rend.vertexShader = shaders.vertexShader
 rend.fragmentShader = shaders.fragmentShader
 
-rend.glLoadModel('model.obj', 
-                 translate = (width/2, height/2, 0),
-                 rotate = (0, 45, 0),
-                 scale = (400, 400, 400))
+rend.glLoadModel('charizard.obj', 
+                 translate = (width/2, height/4, 0),
+                 rotate = (0, 0, 0),
+                 scale = (25, 25, 25))
 
 rend.glRender()
-rend.glFinish('outputModelObj.bmp')
+rend.glFinish('outputObj3.bmp')
