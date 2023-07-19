@@ -15,4 +15,4 @@ rend.glLoadModel('charizard.obj',
                  scale = (25, 25, 25))
 
 rend.glRender()
-rend.glFinish('outputObj3.bmp')
+rend.glFinish('outputObj.bmp')
