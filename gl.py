@@ -242,7 +242,18 @@ class Renderer(object):
         for prim in primitives:
             if self.primitiveType == TRIANGLES:
                 self.glTriangle(prim[0], prim[1], prim[2], primColor)
-
+    
+    # Draw a polygon      
+    def glDrawPolygon(self, vertices, clr = None):
+        # Draw lines between each vertex
+        for i in range(len(vertices)):
+            v0 = vertices[i]
+            v1 = vertices[(i + 1) % len(vertices)]  # Close the polygon
+            
+            # -- Temporally - only x and y dimensions
+            self.glLine(V3(v0[0], v0[1], 0), V3(v1[0], v1[1], 0), clr or self.currColor)
+        
+            
     # Export the BMP file
     def glFinish(self, filename):
         with open(filename, "wb") as file:
