@@ -12,6 +12,7 @@ rend.fragmentShader = shaders.fragmentShader
 # Poligono 1
 vertices_poligono_1 = [(165, 380), (185, 360), (180, 330), (207, 345), (233, 330), (230, 360), (250, 380), (220, 385), (205, 410), (193, 383)]
 rend.glDrawPolygon(vertices_poligono_1, color(1, 1, 1))
+rend.glFillPolygon(vertices_poligono_1, color(1, 1, 1))
 
 # Poligono 2
 vertices_poligono_2 = [(321, 335), (288, 286), (339, 251), (374, 302)]

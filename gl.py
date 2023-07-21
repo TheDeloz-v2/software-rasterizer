@@ -253,6 +253,19 @@ class Renderer(object):
             # -- Temporally - only x and y dimensions
             self.glLine(V3(v0[0], v0[1], 0), V3(v1[0], v1[1], 0), clr or self.currColor)
         
+    # Fill a polygon    
+    def glFillPolygon(self, vertices, clr = None):
+        # Get the bounding box of the polygon
+        x_min = min(vertices, key=lambda x: x[0])[0]
+        x_max = max(vertices, key=lambda x: x[0])[0]
+        y_min = min(vertices, key=lambda x: x[1])[1]
+        y_max = max(vertices, key=lambda x: x[1])[1]
+        
+        # Draw box
+        for x in range(x_min, x_max + 1):
+            for y in range(y_min, y_max + 1):
+                self.glPoint(x, y, clr or self.currColor)
+            
             
     # Export the BMP file
     def glFinish(self, filename):
