@@ -261,12 +261,34 @@ class Renderer(object):
         y_min = min(vertices, key=lambda x: x[1])[1]
         y_max = max(vertices, key=lambda x: x[1])[1]
         
-        # Draw box
+        # For each pixel in the bounding box
         for x in range(x_min, x_max + 1):
             for y in range(y_min, y_max + 1):
-                self.glPoint(x, y, clr or self.currColor)
+                # If the pixel is inside the polygon
+                if self.glPointInPolygon(x, y, vertices):
+                    self.glPoint(x, y, clr or self.currColor)
+        
+    # Check if a point is inside a polygon
+    # Using Ray Casting Algorithm
+    # http://philliplemons.com/posts/ray-casting-algorithm
+    def glPointInPolygon(self, x, y, vertices):
+        n = len(vertices)
+        inside = False
+        
+        for i in range(n):
+            j = (i + 1) % n
             
+            if (vertices[i][1] > y) != (vertices[j][1] > y):
+                
+                # Calculate the intersection of the polygon's edge with the horizontal line
+                intersection = (vertices[j][0] - vertices[i][0]) * (y - vertices[i][1]) / (vertices[j][1] - vertices[i][1]) + vertices[i][0]
+                
+                # Check if the point is to the left of the intersection (inside the polygon)
+                if x < intersection:
+                    inside = not inside
             
+        return inside
+                
     # Export the BMP file
     def glFinish(self, filename):
         with open(filename, "wb") as file:
