@@ -3,6 +3,7 @@ from collections import namedtuple
 import matrixbuddy
 import math
 from obj import Obj
+from texture import Texture
 
 V2 = namedtuple('point', ['x','y'])
 V3 = namedtuple('point', ['x','y','z'])
@@ -36,6 +37,9 @@ class Model(object):
         self.rotate = rotate
         self.scale = scale
         
+    def LoadTexture(self, texturename):
+        self.texture = Texture(texturename)
+        
 
 class Renderer(object):
     # Constructor
@@ -52,22 +56,32 @@ class Renderer(object):
         self.vertexBuffer = []
         
         self.objects = []
+        
+        self.activeTexture = None
+        
 
     def glAddVertices(self, vertices):
         for vertex in vertices:
             self.vertexBuffer.append(vertex)
        
-    def glPrimitiveAssembly(self, transformedVertices):
+    def glPrimitiveAssembly(self, transformedVertices, texCoords):
         # Assembly the vertices into points, lines or triangles
         primitives = []
 
         if self.primitiveType == TRIANGLES:
             for i in range(0, len(transformedVertices), 3):
-                triangle = [
-                    transformedVertices[i],
-                    transformedVertices[i+1],
-                    transformedVertices[i+2]
-                ]
+                triangle = []
+                
+                # Verts
+                triangle.append(transformedVertices[i])
+                triangle.append(transformedVertices[i+1])
+                triangle.append(transformedVertices[i+2])
+                
+                triangle.append(texCoords[i])
+                triangle.append(texCoords[i+1])
+                triangle.append(texCoords[i+2])
+                
+                
                 primitives.append(triangle)
     
         return primitives
@@ -78,7 +92,11 @@ class Renderer(object):
     
     # Clear the screen
     def glClear(self):
-        self.pixels = [[self.clearColor for y in range(self.height)] for x in range(self.width)]
+        self.pixels = [[self.clearColor for y in range(self.height)] 
+                       for x in range(self.width)]
+        
+        self.zbuffer = [[float('inf') for y in range(self.height)] 
+                        for x in range(self.width)]
         
     # Set color
     def glColor(self, r, g, b):
@@ -194,21 +212,31 @@ class Renderer(object):
         return matrixbuddy.multiplicationMM(matrixbuddy.multiplicationMM(translation, scaleMat), rotationMat)
 
 
-    def glLoadModel(self, filename, translate = (0, 0, 0), rotate = (0, 0, 0), scale = (1, 1, 1)):
-        self.objects.append(Model(filename, translate, rotate, scale))
+    def glLoadModel(self, filename, texturename, translate = (0, 0, 0), rotate = (0, 0, 0), scale = (1, 1, 1)):
+        
+        model = Model(filename, translate, rotate, scale)
+        model.LoadTexture(texturename)
+        
+        self.objects.append( model )
         
         
     def glRender(self):
         transformedVerts = []
+        texCoords = []
 
         for model in self.objects:
+            
+            self.activeTexture = model.texture
+            
             mMatrix = self.glModelMatrix(model.translate, model.scale, model.rotate)
 
             for face in model.faces:
                 vertCount = len(face)
+                
                 v0=model.vertices[face[0][0] -1]
                 v1=model.vertices[face[1][0] -1]
                 v2=model.vertices[face[2][0] -1]
+                
                 if vertCount == 4:
                     v3=model.vertices[face[3][0] -1]
 
@@ -223,25 +251,34 @@ class Renderer(object):
                 transformedVerts.append(v0)
                 transformedVerts.append(v1)
                 transformedVerts.append(v2)
+                
                 if vertCount == 4:
                     transformedVerts.append(v0)
                     transformedVerts.append(v2)
                     transformedVerts.append(v3)
+                    
+                vt0 = model.texcoords[face[0][1] - 1]
+                vt1 = model.texcoords[face[1][1] - 1]
+                vt2 = model.texcoords[face[2][1] - 1]
+                
+                if vertCount == 4:
+                    vt3 = model.texcoords[face[3][1] - 1]
+                
+                texCoords.append(vt0)
+                texCoords.append(vt1)
+                texCoords.append(vt2)
+                
+                if vertCount == 4:
+                    texCoords.append(vt0)
+                    texCoords.append(vt2)
+                    texCoords.append(vt3)
 
-        primitives = self.glPrimitiveAssembly(transformedVerts)
-
-        primColor = None
-        if self.fragmentShader:
-            primColor = self.fragmentShader()
-            primColor = color(primColor[0],
-                              primColor[1],
-                              primColor[2],)
-        else:
-            primColor = self.currColor
+        primitives = self.glPrimitiveAssembly(transformedVerts, texCoords)
 
         for prim in primitives:
             if self.primitiveType == TRIANGLES:
-                self.glTriangle(prim[0], prim[1], prim[2], primColor)
+                self.glTriangle_bc(prim[0], prim[1], prim[2], 
+                                   prim[3], prim[4], prim[5])
     
     # Draw a polygon      
     def glDrawPolygon(self, vertices, clr = None):
@@ -288,7 +325,43 @@ class Renderer(object):
                     inside = not inside
             
         return inside
-                
+    
+    
+    def glTriangle_bc(self, A, B, C, vtA, vtB, vtC):
+        
+        minX = round(min(A[0], B[0], C[0]))
+        maxX = round(max(A[0], B[0], C[0]))
+        minY = round(min(A[1], B[1], C[1]))
+        maxY = round(max(A[1], B[1], C[1]))
+
+        for x in range(minX, maxX+1):
+            for y in range(minY, maxY+1):
+
+                if (0 <= x < self.width) and (0 <= y < self.height):
+
+                    p=(x,y)
+                    u,v,w = matrixbuddy.barycentrinCoords(A, B, C, p)
+
+                    if 0 <= u <= 1 and 0 <= v <= 1 and 0 <= w <= 1:
+
+                        z = u * A[2] + v * B[2] + w * C[2]
+                        
+                        if z < self.zbuffer[x][y]:
+
+                            self.zbuffer[x][y] = z
+
+                            uvs = (u * vtA[0] + v * vtB[0] + w * vtC[0],
+                                   u * vtA[1] + v * vtB[1] + w * vtC[1])
+                            
+                            if self.fragmentShader != None:
+                                colorP = self.fragmentShader(texCoords=uvs, 
+                                                             texture = self.activeTexture)
+                                
+                                self.glPoint(x, y, color(colorP[0],colorP[1],colorP[2]))
+                            else:
+                                self.glPoint(x, y, colorP)
+                            
+    
     # Export the BMP file
     def glFinish(self, filename):
         with open(filename, "wb") as file:
