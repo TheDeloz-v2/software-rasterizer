@@ -1,6 +1,6 @@
 # Function to multiply matrix x matrix
 def multiplicationMM(A, B):
-
+    
     rows_A = len(A)
     cols_A = len(A[0])
     rows_B = len(B)
@@ -17,18 +17,27 @@ def multiplicationMM(A, B):
 
 
 # Function to multiply matrix x vector
-def multiplicationMV(m , v):
-    
+def multiplicationMV(m, v):
     result = []
     
     for i in range(len(m)):
-        temp = 0
+        result.append(0)
         for j in range(len(v)):
-            temp += m[i][j] * v[j]
-        result.append(temp)
-        
+            result[i] += m[i][j] * v[j]
+            
     return result
+    
 
+# Function to multiply vector x vector
+def multiplicationVV(v1, v2):
+            
+    result = []
+    
+    for i in range(len(v1)):
+        result.append(v1[i] * v2[i])
+    
+    return result
+        
 
 # Function to cross product of two vectors
 def crossProductVV(v1, v2):
@@ -38,7 +47,7 @@ def crossProductVV(v1, v2):
                 v1[0] * v2[1] - v1[1] * v2[0]]
 
 
-# Function to substraction matrix x matrix
+# Function to substraction matrix - matrix
 def substractionMM(A, B):
     
         result = []
@@ -47,6 +56,27 @@ def substractionMM(A, B):
             result.append([])
             for j in range(len(A[0])):
                 result[i].append(A[i][j] - B[i][j])
+        
+        return result
+
+# Function to substraction vector - vector
+def substractionVV(v1, v2):
+        
+    result = []
+    
+    for i in range(len(v1)):
+        result.append(v1[i] - v2[i])
+    
+    return result
+
+
+# Function to divide vector / escalar
+def divisionVE(v, e):
+        
+        result = []
+        
+        for i in range(len(v)):
+            result.append(v[i] / e)
         
         return result
 
@@ -81,7 +111,7 @@ def normalize(v):
         
     temp = temp ** 0.5
     
-    return [v[i] / temp for i in range(len(v))]
+    return temp
 
 
 # Function to get the adjoint of a matrix
@@ -95,13 +125,15 @@ def adjointMatrix(matrix):
     return adj
 
         
+
 # Function to get the transpose of a matrix
 def transposeMatrix(matrix):
+    transposed = []
     for i in range(len(matrix)):
-        for j in range(i, len(matrix)):
-            matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
+        transposed.append([matrix[j][i] for j in range(len(matrix))])
     
-    return matrix
+    return transposed
+
 
 
 # Function to get the inverse of a matrix
