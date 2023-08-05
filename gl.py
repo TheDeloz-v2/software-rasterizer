@@ -1,6 +1,6 @@
 import struct
 from collections import namedtuple
-import matrixbuddy
+import mathbuddy
 import math
 from obj import Obj
 from texture import Texture
@@ -59,10 +59,15 @@ class Renderer(object):
         
         self.activeTexture = None
         
+        self.glViewPort(0,0,self.width,self.height)
+        self.glCamMatrix()
+        self.glProjectionMatrix()
+        
 
     def glAddVertices(self, vertices):
         for vertex in vertices:
             self.vertexBuffer.append(vertex)
+            
        
     def glPrimitiveAssembly(self, transformedVertices, texCoords):
         # Assembly the vertices into points, lines or triangles
@@ -180,18 +185,67 @@ class Renderer(object):
         self.glLine(A, B, clr or self.currColor)
         self.glLine(B, C, clr or self.currColor)
         self.glLine(C, A, clr or self.currColor)
-
-    def glModelMatrix(self, translate = (0,0,0), scale = (1,1,1), rotate = (0,0,0)):        
+        
+    
+    def glCamMatrix(self, translate = (0,0,0), rotate = (0,0,0)):
+        # Crea una matrix de camera
+        self.camMatrix = self.glModelMatrix(translate, rotate)
+        
+        # La matriz de vista es igual a la inversa de la camara
+        self.viewMatrix = mathbuddy.inverseMatrix(self.camMatrix)
+        
+    
+    def glLookAt(self, camPos = (0,0,0), eyePos = (0,0,0)):
+        worldUp = (0,1,0)
+        
+        foward = mathbuddy.substractionVV(camPos, eyePos)
+        foward = mathbuddy.divisionVE(foward, mathbuddy.normalize(foward))
+        
+        right = mathbuddy.crossProductVV(worldUp, foward)
+        right = mathbuddy.divisionVE(right, mathbuddy.normalize(right))
+        
+        up = mathbuddy.crossProductVV(foward, right)
+        up = mathbuddy.divisionVE(up, mathbuddy.normalize(up))
+        
+        self.camMatrix = [[right[0], up[0], foward[0], camPos[0]],
+                          [right[1], up[1], foward[1], camPos[1]],
+                          [right[2], up[2], foward[2], camPos[2]],
+                          [0,0,0,1]]
+        
+        self.viewMatrix = mathbuddy.inverseMatrix(self.camMatrix)
+    
+    
+    def glProjectionMatrix(self, fov = 60, n = 0.1, f = 1000):
+        
+        aspectRadio = self.vpWidth / self.vpHeight
+        
+        t = math.tan(math.radians(fov) / 2) * n
+        r = t * aspectRadio
+        
+        self.projectionMatrix = [[n/r, 0, 0, 0],
+                                    [0, n/t, 0, 0],
+                                    [0, 0, -(f+n)/(f-n), -(2*f*n)/(f-n)],
+                                    [0, 0, -1, 0]]
+        
+        
+    def glViewPort(self, x, y, width, height):
+        self.vpX = x
+        self.vpY = y
+        self.vpWidth = width
+        self.vpHeight = height
+        
+        self.vpMatrix =[[self.vpWidth/2,0,0,self.vpX+self.vpWidth/2],
+                        [0,self.vpHeight/2,0,self.vpY+self.vpHeight/2],
+                        [0,0,0.5,0.5],
+                        [0,0,0,1]]
+        
+    
+    def glModelMatrix(self, translate = (0,0,0), rotate = (0,0,0), scale = (1,1,1)):        
         translation = [[1,0,0,translate[0]],
                        [0,1,0,translate[1]],
                        [0,0,1,translate[2]],
                        [0,0,0,1]]
-        
-        scaleMat = [[scale[0],0,0,0],
-                    [0,scale[1],0,0],
-                    [0,0,scale[2],0],
-                    [0,0,0,1]]
-        
+                
         rxMat = [[1, 0, 0, 0],
                  [0, math.cos(math.radians(rotate[0])), -math.sin(math.radians(rotate[0])), 0],
                  [0, math.sin(math.radians(rotate[0])), math.cos(math.radians(rotate[0])), 0],
@@ -207,9 +261,14 @@ class Renderer(object):
                  [0, 0, 1, 0],
                  [0, 0, 0, 1]]
         
-        rotationMat = matrixbuddy.multiplicationMM(matrixbuddy.multiplicationMM(rxMat, ryMat), rzMat)
+        rotationMat = mathbuddy.multiplicationMM(mathbuddy.multiplicationMM(rxMat, ryMat), rzMat)
         
-        return matrixbuddy.multiplicationMM(matrixbuddy.multiplicationMM(translation, scaleMat), rotationMat)
+        scaleMat = [[scale[0],0,0,0],
+            [0,scale[1],0,0],
+            [0,0,scale[2],0],
+            [0,0,0,1]]
+                
+        return mathbuddy.multiplicationMM(mathbuddy.multiplicationMM(translation, rotationMat ),scaleMat)
 
 
     def glLoadModel(self, filename, texturename, translate = (0, 0, 0), rotate = (0, 0, 0), scale = (1, 1, 1)):
@@ -228,7 +287,7 @@ class Renderer(object):
             
             self.activeTexture = model.texture
             
-            mMatrix = self.glModelMatrix(model.translate, model.scale, model.rotate)
+            mMatrix = self.glModelMatrix(model.translate, model.rotate, model.scale)
 
             for face in model.faces:
                 vertCount = len(face)
@@ -242,11 +301,30 @@ class Renderer(object):
 
                 if self.vertexShader:
                     
-                    v0=self.vertexShader(v0, modelMatrix=mMatrix)
-                    v1=self.vertexShader(v1, modelMatrix=mMatrix)
-                    v2=self.vertexShader(v2, modelMatrix=mMatrix)
+                    v0=self.vertexShader(v0, 
+                                        modelMatrix=mMatrix, 
+                                        viewMatrix=self.viewMatrix,
+                                        projectionMatrix=self.projectionMatrix,
+                                        vpMatrix=self.vpMatrix)
+                    
+                    v1=self.vertexShader(v1, 
+                                        modelMatrix=mMatrix,
+                                        viewMatrix=self.viewMatrix,
+                                        projectionMatrix=self.projectionMatrix,
+                                        vpMatrix=self.vpMatrix)
+                    
+                    v2=self.vertexShader(v2,
+                                        modelMatrix=mMatrix,
+                                        viewMatrix=self.viewMatrix,
+                                        projectionMatrix=self.projectionMatrix,
+                                        vpMatrix=self.vpMatrix)
+                    
                     if vertCount == 4:
-                        v3=self.vertexShader(v3, modelMatrix=mMatrix)
+                        v3=self.vertexShader(v3,
+                                            modelMatrix=mMatrix,
+                                            viewMatrix=self.viewMatrix,
+                                            projectionMatrix=self.projectionMatrix,
+                                            vpMatrix=self.vpMatrix)
                 
                 transformedVerts.append(v0)
                 transformedVerts.append(v1)
@@ -340,7 +418,7 @@ class Renderer(object):
                 if (0 <= x < self.width) and (0 <= y < self.height):
 
                     p=(x,y)
-                    u,v,w = matrixbuddy.barycentrinCoords(A, B, C, p)
+                    u,v,w = mathbuddy.barycentrinCoords(A, B, C, p)
 
                     if 0 <= u <= 1 and 0 <= v <= 1 and 0 <= w <= 1:
 

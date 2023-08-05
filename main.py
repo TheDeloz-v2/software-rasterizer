@@ -1,28 +1,28 @@
-from gl import Renderer, V3, color
+from gl import Renderer
 import shaders
-import mathbuddy
 
-# width = 2024
-# height = 2024
+# El tamanio del FrameBuffer
+width = 960
+height = 540
 
-# rend = Renderer(width, height)
+# Se crea el renderizador
+rend = Renderer(width, height)
 
-# rend.vertexShader = shaders.vertexShader
-# rend.fragmentShader = shaders.fragmentShader
+# Le damos los shaders que se utilizaran
+rend.vertexShader = shaders.vertexShader
+rend.fragmentShader = shaders.fragmentShader
 
-# rend.glLoadModel(filename = "./models/model.obj", texturename= "./models/model2.bmp", translate=(width/3.5, height/1.7, 0), scale=(1000, 1000, 1000), rotate=(0, 0, 0))
-# rend.glLoadModel(filename = "./models/model2.obj", texturename= "./models/model2.bmp", translate=(width/1.4, height/1.7, 0), scale=(1000, 1000, 1000), rotate=(0, 270, 0 ))
+rend.glLookAt(camPos = (-3,-1,-2), eyePos= (0,0,-5))
 
-# rend.glLoadModel(filename = "./models/model2.obj", texturename= "./models/model2.bmp", translate=(width/2.7, height/5, 0), scale=(1000, 1000, 1000), rotate=(0, 315, 45))
-# rend.glLoadModel(filename = "./models/model2.obj", texturename= "./models/model2.bmp", translate=(width/1.6, height/5, 0), scale=(1000, 1000, 1000), rotate=(0, 45, 315))
+# Cargamos los modelos que rederizaremos
+rend.glLoadModel(filename = "model2.obj",
+                 texturename = "model2.bmp",
+                 translate = (-1, -1.5, -4),
+                 rotate = (0, 180, 0),
+                 scale = (5,5,5))
 
-# rend.glRender()
-# rend.glFinish('outputModel2.bmp')
+# Se renderiza la escena
+rend.glRender()
 
-matrix = [[2, 2, 2],[4, 0, 2],[4, 4, 2]]
-
-print(mathbuddy.determinant(matrix))
-
-print(mathbuddy.transposeMatrix(mathbuddy.adjointMatrix(matrix)))
-
-print(mathbuddy.inverseMatrix(matrix))
+# Se crea el FrameBuffer con la escena renderizada
+rend.glFinish("outputModel2Cameras.bmp")
