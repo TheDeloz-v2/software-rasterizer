@@ -85,8 +85,9 @@ def DutchAngleShot():
     
 
 # Generacion de shots
+# Borrar el # para generar el shot
 
 # mediumShot()
 # lowAngleShot()
 # highAngleShot()
-DutchAngleShot()
+# DutchAngleShot()
