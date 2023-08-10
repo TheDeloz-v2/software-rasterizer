@@ -1,30 +1,92 @@
 from gl import Renderer
 import shaders
 
-# El tamanio del FrameBuffer
+# Tamanio del FrameBuffer
 width = 2040
 height = 1960
 
-# Se crea el renderizador
+# Creacion del Renderer
 rend = Renderer(width, height)
 
-# Le damos los shaders que se utilizaran
+# Shaders a utilizar
 rend.vertexShader = shaders.vertexShader
 rend.fragmentShader = shaders.fragmentShader
 
-# rend.glLookAt(camPos = (1,1,1), eyePos= (0,0,-5))
+# Medium Shot
+def mediumShot():
+    rend.glClear()
+    output = "photoshoot/outputModel3-MS.bmp"
+    
+    rend.glLookAt(camPos = (0,0,0), eyePos= (0,0,-5))
 
-rend.glCamMatrix(translate = (0,0,0), rotate = (0,0,0))
-
-# Cargamos los modelos que rederizaremos
-rend.glLoadModel(filename = "pin.obj",
+    rend.glLoadModel(filename = "pin.obj",
                  texturename = "pin.bmp",
-                 translate = (0, 0, -4),
+                 translate = (0, -1, -4),
                  rotate = (0, 0, 0),
                  scale = (0.5,0.5,0.5))
 
-# Se renderiza la escena
-rend.glRender()
+    rend.glRender()
+    rend.glFinish(output)
+    rend.glClear()
 
-# Se crea el FrameBuffer con la escena renderizada
-rend.glFinish("outputModel3-1.bmp")
+
+# Low Angle Shot
+def lowAngleShot():
+    rend.glClear()
+    output = "photoshoot/outputModel3-LS.bmp"
+    
+    rend.glLookAt(camPos = (0,-2.5,-2), eyePos= (0,1,-5))
+
+    rend.glLoadModel(filename = "pin.obj",
+                 texturename = "pin.bmp",
+                 translate = (0, -1, -4),
+                 rotate = (0, 0, 0),
+                 scale = (0.5,0.5,0.5))
+
+    rend.glRender()
+    rend.glFinish(output)
+    rend.glClear()
+
+
+# High Angle Shot
+def highAngleShot():
+    rend.glClear()
+    output = "photoshoot/outputModel3-HS.bmp"
+    
+    rend.glLookAt(camPos = (0,4,-2), eyePos= (0,-1,-4.5))
+
+    rend.glLoadModel(filename = "pin.obj",
+                 texturename = "pin.bmp",
+                 translate = (0, -1, -4),
+                 rotate = (0, 0, 0),
+                 scale = (0.5,0.5,0.5))
+
+    rend.glRender()
+    rend.glFinish(output)
+    rend.glClear()
+
+
+# Dutch Angle Shot
+def DutchAngleShot():
+    rend.glClear()
+    output = "photoshoot/outputModel3-DS.bmp"
+    
+    rend.glLookAt(camPos = (2,-0.5,0), eyePos= (0,0,-5))
+
+    rend.glLoadModel(filename = "pin.obj",
+                 texturename = "pin.bmp",
+                 translate = (0, -1, -4),
+                 rotate = (0, 0, -29),
+                 scale = (0.5,0.5,0.5))
+
+    rend.glRender()
+    rend.glFinish(output)
+    rend.glClear()
+    
+
+# Generacion de shots
+
+# mediumShot()
+# lowAngleShot()
+# highAngleShot()
+DutchAngleShot()
