@@ -22,22 +22,15 @@ class Obj(object):
                     continue
                 
                 if prefix =="v": #Vertices
-                    self.vertices.append(list(map(float, value.split(" "))))
+                    self.vertices.append(list(map(float, list(filter(None, value.split(" "))))))
                 
                 elif prefix == "vt":  # Texture coordinates
-                    vt_values = list(map(float, value.split(" ")))
-                    if len(vt_values) == 2:
-                        vt_values.append(0.0)  # Adding a default value for the third component
-                    self.texcoords.append(vt_values)
+                    self.texcoords.append(list(map(float, list(filter(None, value.split(" "))))))
 
                 elif prefix =="vn": #Normals
-                    self.normals.append(list(map(float, value.split(" "))))
+                    self.normals.append(list(map(float, list(filter(None, value.split(" "))))))
 
                 elif prefix == "f": #Faces
-                    if '//' in value:
-                        self.faces.append([list(map(int, vert.split("//"))) for vert in value.split(" ")])
-                    else:
-                        self.faces.append([list(map(int, vert.split("/"))) for vert in value.split(" ")])
-                
+                    self.faces.append([list(map(int, list(filter(None, face.split("/"))))) for face in list(filter(None, value.split(" ")))])
                 else:
                     pass
