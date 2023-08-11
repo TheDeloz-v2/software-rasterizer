@@ -70,3 +70,73 @@ def gouradShader(**kwargs):
     color = [max(0, min(1, c * intensity)) for c in color]
     
     return color
+
+
+def infraredShader(**kwargs):
+    texture = kwargs["texture"]
+    tA, tB, tC = kwargs["texCoords"]
+    nA, nB, nC = kwargs["normals"]
+    dLight = kwargs["dLight"]
+    u, v, w = kwargs["bCoords"]
+    
+    normal = [u * nA[0] + v * nB[0] + w * nC[0],
+              u * nA[1] + v * nB[1] + w * nC[1],
+              u * nA[2] + v * nB[2] + w * nC[2]]
+    
+    dLight = np.array(dLight)
+    
+    color = [1, 1, 1]
+    
+    if texture is not None:
+        tU = tA[0] * u + tB[0] * v + tC[0] * w
+        tV = tA[1] * u + tB[1] * v + tC[1] * w
+        textureColor = texture.getColor(tU, tV)
+        color = [c * t for c, t in zip(color, textureColor)]
+    
+    intensity = np.dot(normal, -dLight)
+    
+    infrared_color = [max(0, min(1, 1 - intensity)),
+                      max(0, min(1, 1 - intensity * 0.5)),
+                      max(0, min(1, 1 - intensity * 0.2))]
+    
+    return infrared_color
+
+
+def rainbowShader(**kwargs):
+    texture = kwargs["texture"]
+    tA, tB, tC = kwargs["texCoords"]
+    nA, nB, nC = kwargs["normals"]
+    dLight = kwargs["dLight"]
+    u, v, w = kwargs["bCoords"]
+    
+    normal = [u * nA[0] + v * nB[0] + w * nC[0],
+              u * nA[1] + v * nB[1] + w * nC[1],
+              u * nA[2] + v * nB[2] + w * nC[2]]
+    
+    dLight = np.array(dLight)
+    
+    color = [1, 1, 1]
+    
+    if texture is not None:
+        tU = tA[0] * u + tB[0] * v + tC[0] * w
+        tV = tA[1] * u + tB[1] * v + tC[1] * w
+        textureColor = texture.getColor(tU, tV)
+        color = [c * t for c, t in zip(color, textureColor)]
+    
+    intensity = np.dot(normal, -dLight)
+    
+    rainbow_color = getRainbowColor(intensity)
+    
+    return rainbow_color
+
+def getRainbowColor(intensity):
+    if intensity <= 0.05:
+        return [1, 0, 0]  # Red
+    elif intensity <= 0.3:
+        return [1, 0.5, 0]  # Orange
+    elif intensity <= 0.5:
+        return [1, 1, 0]  # Yellow
+    elif intensity <= 0.7:
+        return [0, 1, 0]  # Green
+    else:
+        return [0, 0, 1]  # Blue
