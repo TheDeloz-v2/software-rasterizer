@@ -63,33 +63,41 @@ class Renderer(object):
         self.glCamMatrix()
         self.glProjectionMatrix()
         
+        self.directionalLight = (1, 0, 0)
+        
 
     def glAddVertices(self, vertices):
         for vertex in vertices:
             self.vertexBuffer.append(vertex)
             
        
-    def glPrimitiveAssembly(self, transformedVertices, texCoords):
-        # Assembly the vertices into points, lines or triangles
-        primitives = []
-
+    def glPrimitiveAssembly(self, tVerts, tTexCoords, tNormals):
+        primitives = [ ]
         if self.primitiveType == TRIANGLES:
-            for i in range(0, len(transformedVertices), 3):
-                triangle = []
+            for i in range(0, len(tVerts), 3):
+                verts = [
+                    tVerts[i],
+                    tVerts[i + 1],
+                    tVerts[i + 2]]
                 
-                # Verts
-                triangle.append(transformedVertices[i])
-                triangle.append(transformedVertices[i+1])
-                triangle.append(transformedVertices[i+2])
+                texCoords = [
+                    tTexCoords[i],
+                    tTexCoords[i + 1],
+                    tTexCoords[i + 2]]
                 
-                triangle.append(texCoords[i])
-                triangle.append(texCoords[i+1])
-                triangle.append(texCoords[i+2])
+                normals = [
+                    tNormals[i],
+                    tNormals[i + 1],
+                    tNormals[i + 2]]
                 
+                triangle = [
+                    verts,
+                    texCoords,
+                    normals]
                 
                 primitives.append(triangle)
-    
         return primitives
+
 
     # Color to clear the screen
     def glClearColor(self, r, g, b):
@@ -179,12 +187,6 @@ class Renderer(object):
                     y -= 1
                 
                 limit += 1
-        
-    # Draw a triangle
-    def glTriangle(self, A, B, C, clr = None):
-        self.glLine(A, B, clr or self.currColor)
-        self.glLine(B, C, clr or self.currColor)
-        self.glLine(C, A, clr or self.currColor)
         
     
     def glCamMatrix(self, translate = (0,0,0), rotate = (0,0,0)):
@@ -282,6 +284,7 @@ class Renderer(object):
     def glRender(self):
         transformedVerts = []
         texCoords = []
+        normals = []
 
         for model in self.objects:
             
@@ -297,9 +300,10 @@ class Renderer(object):
                 v2=model.vertices[face[2][0] -1]
                 
                 if vertCount == 4:
-                    v3=model.vertices[face[3][0] -1]
+                    v3=model.vertices[face[3][0] -1]      
 
                 if self.vertexShader:
+                    
                     
                     v0=self.vertexShader(v0, 
                                         modelMatrix=mMatrix, 
@@ -350,13 +354,27 @@ class Renderer(object):
                     texCoords.append(vt0)
                     texCoords.append(vt2)
                     texCoords.append(vt3)
+                
+                vn0 = model.normals[face[0][2] - 1]
+                vn1 = model.normals[face[1][2] - 1]
+                vn2 = model.normals[face[2][2] - 1]
+                
+                if vertCount == 4:
+                    vn3 = model.normals[face[3][2] - 1]
+                    
+                normals.append(vn0)
+                normals.append(vn1)
+                normals.append(vn2)
+                if vertCount == 4:
+                    normals.append(vn0)
+                    normals.append(vn2)
+                    normals.append(vn3)
 
-        primitives = self.glPrimitiveAssembly(transformedVerts, texCoords)
+        primitives = self.glPrimitiveAssembly(transformedVerts, texCoords, normals)
 
         for prim in primitives:
             if self.primitiveType == TRIANGLES:
-                self.glTriangle_bc(prim[0], prim[1], prim[2], 
-                                   prim[3], prim[4], prim[5])
+                self.glTriangle(prim[0], prim[1], prim[2])
     
     # Draw a polygon      
     def glDrawPolygon(self, vertices, clr = None):
@@ -405,39 +423,41 @@ class Renderer(object):
         return inside
     
     
-    def glTriangle_bc(self, A, B, C, vtA, vtB, vtC):
+    def glTriangle(self, verts, texCoords, normals):
+        A = verts[0]
+        B = verts[1]
+        C = verts[2]
         
         minX = round(min(A[0], B[0], C[0]))
         maxX = round(max(A[0], B[0], C[0]))
         minY = round(min(A[1], B[1], C[1]))
         maxY = round(max(A[1], B[1], C[1]))
 
-        for x in range(minX, maxX+1):
-            for y in range(minY, maxY+1):
-
+        # Para cada pixel dentro del bounding box
+        for x in range(minX, maxX + 1):
+            for y in range(minY, maxY + 1):
+                # Si el pixel est� dentro del FrameBuffer
                 if (0 <= x < self.width) and (0 <= y < self.height):
-
-                    p=(x,y)
-                    u,v,w = mathbuddy.barycentrinCoords(A, B, C, p)
-
-                    if 0 <= u <= 1 and 0 <= v <= 1 and 0 <= w <= 1:
-
-                        z = u * A[2] + v * B[2] + w * C[2]
+                    P = (x,y)
+                    bCoords = mathbuddy.barycentrinCoords(A, B, C, P)
+                    
+                    if bCoords != None:
+                        u, v, w = bCoords
                         
+                        z = u * A[2] + v * B[2] + w * C[2]
                         if z < self.zbuffer[x][y]:
-
                             self.zbuffer[x][y] = z
-
-                            uvs = (u * vtA[0] + v * vtB[0] + w * vtC[0],
-                                   u * vtA[1] + v * vtB[1] + w * vtC[1])
                             
                             if self.fragmentShader != None:
-                                colorP = self.fragmentShader(texCoords=uvs, 
-                                                             texture = self.activeTexture)
-                                
-                                self.glPoint(x, y, color(colorP[0],colorP[1],colorP[2]))
+                                colorP = self.fragmentShader(texture = self.activeTexture,
+                                                            texCoords = texCoords,
+                                                            normals = normals,
+                                                            dLight = self.directionalLight,
+                                                            bCoords = bCoords,)
+
+                                self.glPoint(x, y, color(colorP[0], colorP[1], colorP[2]))
                             else:
-                                self.glPoint(x, y, colorP)
+                                self.glPoint(x, y)
                             
     
     # Export the BMP file
