@@ -300,44 +300,7 @@ class Renderer(object):
                 v2=model.vertices[face[2][0] -1]
                 
                 if vertCount == 4:
-                    v3=model.vertices[face[3][0] -1]      
-
-                if self.vertexShader:
-                    
-                    
-                    v0=self.vertexShader(v0, 
-                                        modelMatrix=mMatrix, 
-                                        viewMatrix=self.viewMatrix,
-                                        projectionMatrix=self.projectionMatrix,
-                                        vpMatrix=self.vpMatrix)
-                    
-                    v1=self.vertexShader(v1, 
-                                        modelMatrix=mMatrix,
-                                        viewMatrix=self.viewMatrix,
-                                        projectionMatrix=self.projectionMatrix,
-                                        vpMatrix=self.vpMatrix)
-                    
-                    v2=self.vertexShader(v2,
-                                        modelMatrix=mMatrix,
-                                        viewMatrix=self.viewMatrix,
-                                        projectionMatrix=self.projectionMatrix,
-                                        vpMatrix=self.vpMatrix)
-                    
-                    if vertCount == 4:
-                        v3=self.vertexShader(v3,
-                                            modelMatrix=mMatrix,
-                                            viewMatrix=self.viewMatrix,
-                                            projectionMatrix=self.projectionMatrix,
-                                            vpMatrix=self.vpMatrix)
-                
-                transformedVerts.append(v0)
-                transformedVerts.append(v1)
-                transformedVerts.append(v2)
-                
-                if vertCount == 4:
-                    transformedVerts.append(v0)
-                    transformedVerts.append(v2)
-                    transformedVerts.append(v3)
+                    v3=model.vertices[face[3][0] -1]   
                     
                 vt0 = model.texcoords[face[0][1] - 1]
                 vt1 = model.texcoords[face[1][1] - 1]
@@ -368,7 +331,49 @@ class Renderer(object):
                 if vertCount == 4:
                     normals.append(vn0)
                     normals.append(vn2)
-                    normals.append(vn3)
+                    normals.append(vn3)   
+
+                if self.vertexShader:
+                    
+                    v0=self.vertexShader(v0, 
+                                        modelMatrix=mMatrix, 
+                                        viewMatrix=self.viewMatrix,
+                                        projectionMatrix=self.projectionMatrix,
+                                        vpMatrix=self.vpMatrix,
+                                        normals = vn0)
+                    
+                    v1=self.vertexShader(v1, 
+                                        modelMatrix=mMatrix,
+                                        viewMatrix=self.viewMatrix,
+                                        projectionMatrix=self.projectionMatrix,
+                                        vpMatrix=self.vpMatrix, 
+                                        normals = vn1)
+                    
+                    v2=self.vertexShader(v2,
+                                        modelMatrix=mMatrix,
+                                        viewMatrix=self.viewMatrix,
+                                        projectionMatrix=self.projectionMatrix,
+                                        vpMatrix=self.vpMatrix,
+                                        normals = vn2)
+                    
+                    if vertCount == 4:
+                        v3=self.vertexShader(v3,
+                                            modelMatrix=mMatrix,
+                                            viewMatrix=self.viewMatrix,
+                                            projectionMatrix=self.projectionMatrix,
+                                            vpMatrix=self.vpMatrix,
+                                            normals = vn3)
+                
+                transformedVerts.append(v0)
+                transformedVerts.append(v1)
+                transformedVerts.append(v2)
+                
+                if vertCount == 4:
+                    transformedVerts.append(v0)
+                    transformedVerts.append(v2)
+                    transformedVerts.append(v3)
+                    
+                
 
         primitives = self.glPrimitiveAssembly(transformedVerts, texCoords, normals)
 

@@ -30,6 +30,15 @@ def multiplicationMV(m, v):
     return result
     
 
+# Function to convert a vector to negative
+def negativeV(v):
+    result = []
+    
+    for i in range(len(v)):
+        result.append(-v[i])
+    
+    return result
+
 # Function to multiply vector x vector
 def multiplicationVV(v1, v2):
             
@@ -37,6 +46,16 @@ def multiplicationVV(v1, v2):
     
     for i in range(len(v1)):
         result.append(v1[i] * v2[i])
+    
+    return result
+
+# Fucntion dot product of two vectors
+def dotProductVV(v1, v2):
+            
+    result = 0
+    
+    for i in range(len(v1)):
+        result += v1[i] * v2[i]
     
     return result
         

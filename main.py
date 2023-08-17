@@ -10,17 +10,17 @@ rend = Renderer(width, height)
 
 # Shaders a utilizar
 rend.vertexShader = shaders.vertexShader
-rend.fragmentShader = shaders.rainbowShader
+rend.fragmentShader = shaders.meshShader
 
 rend.glClear()
-output = "outputPin-S3.bmp"
+output = "outputModel2-S9-Mesh.bmp"
 
 rend.glLookAt(camPos = (0,0,0), eyePos= (0,0,-5))
 
 rend.glLoadModel(filename = "pin.obj",
                 texturename = "pin.bmp",
                 translate = (0, -2, -5),
-                rotate = (0, 0, 0),
+                rotate = (0, 180, 0),
                 scale = (1,1,1))
 
 rend.glRender()
