@@ -1,5 +1,6 @@
 from gl import Renderer
 import shaders
+import converter
 
 # Tamanio del FrameBuffer
 width = 2040
@@ -26,3 +27,7 @@ rend.glLoadModel(filename = "pin.obj",
 rend.glRender()
 rend.glFinish(output)
 rend.glClear()
+
+outputJPG = output.replace(".bmp", ".jpg")
+
+converter.bmp_to_jpg(output, outputJPG)
