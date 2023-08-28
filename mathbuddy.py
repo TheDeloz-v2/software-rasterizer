@@ -17,7 +17,6 @@ def multiplicationMM(A, B):
 
     return result 
 
-
 # Function to multiply matrix x vector
 def multiplicationMV(m, v):
     result = []
@@ -28,7 +27,6 @@ def multiplicationMV(m, v):
             result[i] += m[i][j] * v[j]
             
     return result
-    
 
 # Function to convert a vector to negative
 def negativeV(v):
@@ -59,14 +57,12 @@ def dotProductVV(v1, v2):
     
     return result
         
-
 # Function to cross product of two vectors
 def crossProductVV(v1, v2):
         
         return [v1[1] * v2[2] - v1[2] * v2[1],
                 v1[2] * v2[0] - v1[0] * v2[2],
                 v1[0] * v2[1] - v1[1] * v2[0]]
-
 
 # Function to substraction matrix - matrix
 def substractionMM(A, B):
@@ -90,7 +86,6 @@ def substractionVV(v1, v2):
     
     return result
 
-
 # Function to divide vector / escalar
 def divisionVE(v, e):
         
@@ -101,12 +96,10 @@ def divisionVE(v, e):
         
         return result
 
-
 # Function to get a cofactor from a matrix
 def cofactor(matrix, i, j):
     
     return [row[: j] + row[j + 1:] for row in (matrix[: i] + matrix[i + 1:])]
-
 
 # Function to get the determinant of a matrix
 def determinant(matrix):
@@ -123,7 +116,6 @@ def determinant(matrix):
     
     return det
    
-    
 # Function to normalize a vector
 def normalize(v):
     temp = 0
@@ -133,7 +125,6 @@ def normalize(v):
     temp = temp ** 0.5
     
     return temp
-
 
 # Function to get the adjoint of a matrix
 def adjointMatrix(matrix):
@@ -145,8 +136,6 @@ def adjointMatrix(matrix):
     
     return adj
 
-        
-
 # Function to get the transpose of a matrix
 def transposeMatrix(matrix):
     transposed = []
@@ -154,8 +143,6 @@ def transposeMatrix(matrix):
         transposed.append([matrix[j][i] for j in range(len(matrix))])
     
     return transposed
-
-
 
 # Function to get the inverse of a matrix
 def inverseMatrix(matrix):
@@ -171,7 +158,6 @@ def inverseMatrix(matrix):
                 inverse[i].append(adjtrans[i][j] / det)
         
         return inverse
-
 
 # Function to get the barycentric coordinates of a triangle
 def barycentrinCoords(A, B, C, P):

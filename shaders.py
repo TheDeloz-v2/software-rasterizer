@@ -1,10 +1,13 @@
 import mathbuddy
+from math import exp
+import random
 
 modelMatrix = None
 viewMatrix = None
 projectionMatrix = None
 vpMatrix = None
 
+# Vertex Shader, uses the matrices to calculate the position of the vertex
 def vertexShader(vertex, **kwargs):
     modelMatrix = kwargs['modelMatrix']
     viewMatrix = kwargs['viewMatrix']
@@ -32,6 +35,8 @@ def vertexShader(vertex, **kwargs):
 
     return vt
 
+
+# Fat Shader, increase the size of the model
 def fatShader(vertex, **kwargs):
     modelMatrix = kwargs['modelMatrix']
     viewMatrix = kwargs['viewMatrix']
@@ -63,6 +68,7 @@ def fatShader(vertex, **kwargs):
     return vt
 
 
+# Fragment Shader, uses the color of the texture to paint the model
 def fragmentShader(**kwargs):
     texture = kwargs["texture"]
     tA, tB, tC = kwargs["texCoords"]
@@ -80,7 +86,8 @@ def fragmentShader(**kwargs):
     
     return color
 
-# Gourad Shader
+
+# Gourad Shader, uses the normals of the model to create the efect of a more detailed texture
 def gouradShader(**kwargs):
     texture= kwargs["texture"]
     tA, tB, tC= kwargs["texCoords"]
@@ -116,11 +123,101 @@ def gouradShader(**kwargs):
 
     else:
         return [0,0,0]
+    
+
+# Normal Map Shader, uses a normal map to create the efect of a more detailed texture
+def normalMapShader(**kwargs):
+    texture= kwargs["texture"]
+    normalMap= kwargs["normalMap"]
+    tA, tB, tC= kwargs["texCoords"]
+    nA, nB, nC= kwargs["normals"]
+    dLight = kwargs["dLight"]
+    u, v, w= kwargs["bCoords"]
+    tangent = kwargs["tangent"]
+
+    b= 1.0
+    g= 1.0
+    r= 1.0
+
+    tU= u * tA[0] + v * tB[0] + w * tC[0]
+    tV= u * tA[1] + v * tB[1] + w * tC[1]
+        
+    if texture != None:
+        
+        textureColor = texture.getColor(tU, tV)    
+        b *= textureColor[2]
+        g *= textureColor[1]
+        r *= textureColor[0]
+
+    normal= [u * nA[0] + v * nB[0] + w * nC[0],
+             u * nA[1] + v * nB[1] + w * nC[1],
+             u * nA[2] + v * nB[2] + w * nC[2]]
+    
+    if normalMap != None:
+        texNormal = normalMap.getColor(tU, tV)
+        texNormal = [texNormal[0] * 2 - 1,
+                        texNormal[1] * 2 - 1,
+                        texNormal[2] * 2 - 1]
+        
+        texNormal = mathbuddy.divisionVE(texNormal, mathbuddy.normalize(texNormal))
+        
+        bitangent = mathbuddy.crossProductVV(normal, tangent)
+        bitangent = mathbuddy.divisionVE(bitangent, mathbuddy.normalize(bitangent))
+        
+        
+        tangent = mathbuddy.crossProductVV(normal, bitangent)
+        tangent = mathbuddy.divisionVE(tangent, mathbuddy.normalize(tangent))
+        
+        
+        tangentMatrix = [[tangent[0], bitangent[0], normal[0]],
+                            [tangent[1], bitangent[1], normal[1]],
+                            [tangent[2], bitangent[2], normal[2]]]
+        
+        texNormal = mathbuddy.multiplicationMV(tangentMatrix, texNormal)
+        texNormal = mathbuddy.divisionVE(texNormal, mathbuddy.normalize(texNormal))
+        
+        intensity = mathbuddy.dotProductVV(texNormal, mathbuddy.negativeV(dLight))
+        
+    else:
+        intensity = mathbuddy.dotProductVV(normal, mathbuddy.negativeV(dLight))
+        
+        b *= intensity
+        g *= intensity
+        r *= intensity
+        
+    if intensity > 0:
+        return r, g, b
+    
+    else:
+        return [0,0,0]
 
 
 # ----------------------------------------------------------------
 # ----------------------- SHADERS EXTRAS ------------------------
 # ----------------------------------------------------------------
+
+# Obscure Shader, obscure the color of the texture
+def obscureShader(**kwargs):
+    texture = kwargs["texture"]
+    tA, tB, tC = kwargs["texCoords"]
+    u, v, w = kwargs["bCoords"]
+    
+    b= 1.0
+    g= 1.0
+    r= 1.0
+    
+    obsc = 0.7
+
+    if texture != None:
+        tU= u * tA[0] + v * tB[0] + w * tC[0]
+        tV= u * tA[1] + v * tB[1] + w * tC[1]
+        
+        textureColor = texture.getColor(tU, tV)    
+        b *= textureColor[2] * obsc
+        g *= textureColor[1] * obsc
+        r *= textureColor[0] * obsc
+        
+    return r,g,b
 
 
 # Negative Shader, invert the color of the texture
@@ -300,27 +397,46 @@ def comicShader(**kwargs):
     
     else:
         return [0,0,0]
+    
 
-
-# Mesh Shader, creates the efect of a adjustable mesh vision
-def meshShader(**kwargs):
+# Blaze Shader, creates the efect of a blaze vision based in a specific color
+def blazeShader(**kwargs):
     texture = kwargs["texture"]
     tA, tB, tC = kwargs["texCoords"]
+    nA, nB, nC = kwargs["normals"]
+    dLight = kwargs["dLight"]
     u, v, w = kwargs["bCoords"]
-    
-    pastel = 0.5
-    
+
     if texture != None:
         tU = u * tA[0] + v * tB[0] + w * tC[0]
         tV = u * tA[1] + v * tB[1] + w * tC[1]
         
         textureColor = texture.getColor(tU, tV)
-        
-        textureColor[0] = textureColor[0] * pastel
-        textureColor[1] = textureColor[1] * pastel
-        textureColor[2] = textureColor[2] * pastel
-        
-        return textureColor
+
+    normal = (u * nA[0] + v * nB[0] + w * nC[0],
+              u * nA[1] + v * nB[1] + w * nC[1],
+              u * nA[2] + v * nB[2] + w * nC[2])
     
-    else:
-        return [0,0,0]
+    negativedLight = (-dLight[0], -dLight[1], -dLight[2])
+    intensity = max(0, mathbuddy.dotProductVV(normal, negativedLight))
+
+    # Color dorado
+    outlineColor = (1, 0.84, 0) 
+    interiorColor = textureColor if texture != None else (1.0, 1.0, 1.0)
+    
+    # Factor de umbral de intensidad
+    threshold = 0.5
+    
+    # Factor para suavizar el contorno
+    falloff = 0.2 
+
+    mixFactor = exp(-(intensity - threshold) / falloff)
+
+    color = [
+        (1 - mixFactor) * interiorColor[channel] + mixFactor * outlineColor[channel]
+        for channel in range(3)
+    ]
+
+    color = [max(0.0, min(1.0, channel)) for channel in color]
+
+    return color
